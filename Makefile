@@ -6,50 +6,40 @@
 #    By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/05/17 16:00:00 by maoliiny          #+#    #+#              #
-#    Updated: 2025/05/22 17:52:19 by maoliiny         ###   ########.fr        #
+#    Updated: 2025/05/23 14:44:37 by maoliiny         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-NAME    := pipex
+NAME    := philo
 
 CC      := cc
 CFLAGS  := -Wall -Wextra -Werror
 
-INCLUDES := -Iincl -Ilibft
+INCLUDES := -Iincl
 
-SRCS    := srcs/pipex.c srcs/pipex_utils.c
+SRCS    := srcs/philo.c
 OBJS    := $(SRCS:srcs/%.c=obj/%.o)
-
-LIBFT_DIR := libft
-LIBFT_A   := $(LIBFT_DIR)/libft.a
 
 .PHONY: all clean fclean re
 
 all: $(NAME)
 
-$(NAME): $(OBJS) $(LIBFT_A)
-	$(CC) $(CFLAGS) $(INCLUDES) $(OBJS) $(LIBFT_A) -o $(NAME)
+$(NAME): $(OBJS) incl/philo.h
+	$(CC) $(CFLAGS) $(INCLUDES) $(OBJS) -o $(NAME)
 
-obj/%.o: srcs/%.c incl/pipex.h | objs
+obj/%.o: srcs/%.c incl/philo.h | obj
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-objs:
-	mkdir -p obj
-
-$(LIBFT_A):
-	@$(MAKE) --no-print-directory -C $(LIBFT_DIR)
-	@echo "make libft"
+obj:
+	@mkdir -p obj
 
 clean:
 	rm -f $(OBJS)
-	@$(MAKE) --no-print-directory -C $(LIBFT_DIR) clean
-	@echo "clean libft"
 
 fclean: clean
 	rm -f $(NAME)
-	@$(MAKE) --no-print-directory -C $(LIBFT_DIR) fclean
-	@echo "fclean libft"
 
 re:
 	@$(MAKE) --no-print-directory fclean
 	@$(MAKE) --no-print-directory all
+
