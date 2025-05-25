@@ -6,7 +6,7 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/23 14:33:28 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/25 14:22:26 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/25 18:37:38 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,8 @@ long	ft_parser(const char *nptr)
 		num = num * 10 + dig;
 		nptr++;
 	}
+	if (*nptr != '\0')
+		return (0);
 	return (num);
 }
 
@@ -48,9 +50,9 @@ void	*exist(void *arg)
 	long		elapsed;
 
 	club = (t_philo *)arg;
-	pthread_mutex_lock(&club->lock);
+	/* pthread_mutex_lock(&club->lock); */
 	philo_id = ++id_ctr;
-	pthread_mutex_unlock(&club->lock);
+	/* pthread_mutex_unlock(&club->lock); */
 	pthread_barrier_wait(&club->barrier);
 	if (philo_id == 1)
 		club->start = current_time_ms();
@@ -66,7 +68,7 @@ void	*exist(void *arg)
 			break ;
 		}
 		printf("%ld philo %d %s\n", elapsed, philo_id, EAT);
-		usleep(1000 * club->time_to_eat);
+		usleep(1000 * (club->time_to_eat));
 	}
 	return (NULL);
 }
@@ -107,32 +109,45 @@ void	*exist(void *arg)
 // 	}
 // 	return (NULL);
 // }
-void	life(t_philo *data)
+int	life(t_philo *data)
 {
 	int	i;
 
-	data->group = malloc(sizeof(pthread_t) * data->id);
+	data->group = malloc(sizeof(pthread_t) * data->num);
 	pthread_mutex_init(&data->lock, NULL);
-	pthread_barrier_init(&data->barrier, NULL, data->id);
+	pthread_barrier_init(&data->barrier, NULL, data->num);
 	i = 0;
-	while (i < data->id)
-	{
-		if (pthread_create(&data->group[i], NULL, exist, data) != 0)
-		{
-			printf("Thread creation failed\n");
-			break ;
-		}
+	while (i < data->num && pthread_create(&data->group[i], NULL, exist,
+			data) == 0)
 		i++;
-	}
-	i = 0;
-	while (i < data->id)
-	{
+	if (i != data->num)
+		return (0);
+	i = -1;
+	while (++i < data->num)
 		pthread_join(data->group[i], NULL);
-		i++;
-	}
 	free(data->group);
 	pthread_mutex_destroy(&data->lock);
 	pthread_barrier_destroy(&data->barrier);
+	return (1);
+}
+
+int	init_club(t_philo *debate_club, char **av, int ac)
+{
+	debate_club->num = ft_parser(av[1]);
+	debate_club->forks = debate_club->num;
+	debate_club->time_to_die = ft_parser(av[2]);
+	debate_club->time_to_eat = ft_parser(av[3]);
+	debate_club->time_to_sleep = ft_parser(av[4]);
+	if (debate_club->num < 1 || debate_club->time_to_sleep < 1
+		|| debate_club->time_to_eat < 1 || debate_club->time_to_sleep < 1)
+		return (-1);
+	if (ac == 6)
+	{
+		debate_club->meals = ft_parser(av[5]);
+		if (debate_club->meals < 1)
+			return (-1);
+	}
+	return (0);
 }
 
 int	main(int ac, char **av)
@@ -144,14 +159,9 @@ int	main(int ac, char **av)
 		printf(INSTRUCTIONS);
 		return (0);
 	}
-	debate_club.id = ft_parser(av[1]);
-	debate_club.time_to_die = ft_parser(av[2]);
-	debate_club.time_to_eat = ft_parser(av[3]);
-	debate_club.time_to_sleep = ft_parser(av[4]);
-	if (debate_club.id < 1 || debate_club.time_to_sleep < 1
-		|| debate_club.time_to_eat < 1 || debate_club.time_to_sleep < 1)
+	if (init_club(&debate_club, av, ac) != 0)
 		return (EXIT_FAILURE);
-	if (ac == 6)
-		debate_club.meals = ft_parser(av[5]);
-	life(&debate_club);
+	if (life(&debate_club) == 0)
+		return (EXIT_FAILURE);
+	return (0);
 }

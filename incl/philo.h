@@ -6,7 +6,7 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/23 14:30:12 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/25 14:18:49 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/25 18:45:46 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,19 +24,20 @@
 # define DIED "died"
 # define TNK "is thinking"
 # define SLP "is sleeping"
-# define INSTRUCTIONS                         \
-	"accepted arguments:\n"                  \
-	"number_of_philosophers"                 \
-	" time_to_die time_to_eat time_to_sleep" \
-	" [number_of_times_each_philosopher_must_eat]"
+# define INSTRUCTIONS \
+	"accepted arguments:\n\
+number_of_philosophers\n\
+time_to_die\ntime_to_eat\ntime_to_sleep\n\
+[number_of_times_each_philosopher_must_eat]\n"
 
 typedef struct t_philo
 {
-	int					id;
+	int					num;
 	long				time_to_die;
 	long				time_to_eat;
 	long				time_to_sleep;
 	int					meals;
+	int					forks;
 	pthread_mutex_t		lock;
 	pthread_t			*group;
 	long				start;
