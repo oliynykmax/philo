@@ -6,7 +6,7 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/23 14:30:12 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/23 18:46:39 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/25 11:19:41 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,22 +28,23 @@
 
 typedef struct t_philo
 {
-	int				id;
-	long			time_to_die;
-	long			time_to_eat;
-	long			time_to_sleep;
-	int				meals;
-	long			start_time;
-}					t_philo;
+	int					id;
+	long				time_to_die;
+	long				time_to_eat;
+	long				time_to_sleep;
+	int					meals;
+	long				start_time;
+}						t_philo;
 
-typedef struct s_debate {
-    pthread_mutex_t lock;
-    pthread_t *group;
-    long start;
-    long time_to_eat;
-    int philo_count;
-    int *ready;
-    pthread_barrier_t barrier;
-} t_debate;
+typedef struct s_debate
+{
+	pthread_mutex_t		lock;
+	pthread_t			*group;
+	long				start;
+	long				time_to_eat;
+	int					philo_count;
+	int					*ready;
+	pthread_barrier_t	barrier;
+}						t_debate;
 
 #endif
