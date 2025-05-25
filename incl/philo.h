@@ -6,7 +6,7 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/23 14:30:12 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/25 11:19:41 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/25 14:18:49 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,11 @@
 # include <string.h>
 # include <sys/time.h>
 # include <unistd.h>
-
+# define FORK "has taken a fork"
+# define EAT "is eating"
+# define DIED "died"
+# define TNK "is thinking"
+# define SLP "is sleeping"
 # define INSTRUCTIONS                         \
 	"accepted arguments:\n"                  \
 	"number_of_philosophers"                 \
@@ -33,18 +37,10 @@ typedef struct t_philo
 	long				time_to_eat;
 	long				time_to_sleep;
 	int					meals;
-	long				start_time;
-}						t_philo;
-
-typedef struct s_debate
-{
 	pthread_mutex_t		lock;
 	pthread_t			*group;
 	long				start;
-	long				time_to_eat;
-	int					philo_count;
-	int					*ready;
 	pthread_barrier_t	barrier;
-}						t_debate;
+}						t_philo;
 
 #endif
