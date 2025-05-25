@@ -6,12 +6,11 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/23 14:33:28 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/25 18:37:38 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/25 22:20:37 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../incl/philo.h"
-#include <stdlib.h>
 
 long	ft_parser(const char *nptr)
 {
@@ -38,96 +37,69 @@ long	current_time_ms(void)
 	return (t.tv_sec * 1000L + t.tv_usec / 1000);
 }
 
-// void	*monitor(void *arg)
-// {
-// }
-
-void	*exist(void *arg)
+void	*monitor(void *arg)
 {
-	t_philo		*club;
-	static int	id_ctr = 0;
-	int			philo_id;
-	long		elapsed;
+	t_philo	*club;
+	int		i;
 
+	i = 0;
 	club = (t_philo *)arg;
-	/* pthread_mutex_lock(&club->lock); */
-	philo_id = ++id_ctr;
-	/* pthread_mutex_unlock(&club->lock); */
-	pthread_barrier_wait(&club->barrier);
-	if (philo_id == 1)
-		club->start = current_time_ms();
-	pthread_barrier_wait(&club->barrier);
-	printf("0 philo %d started thinking\n", philo_id);
-	usleep(1000 * club->time_to_eat);
 	while (1)
 	{
-		elapsed = current_time_ms() - club->start;
-		if (elapsed >= club->time_to_die)
+		if (club->cool[i].state == -1)
 		{
-			printf("%ld philo %d %s\n", elapsed, philo_id, DIED);
+			printf("%ld %d %s\n", club->start, club->cool[i].philo_id, DIED);
+			club->end = 1;
 			break ;
 		}
-		printf("%ld philo %d %s\n", elapsed, philo_id, EAT);
-		usleep(1000 * (club->time_to_eat));
+		if (i + 1 == club->id)
+			i = 0;
+		else
+			i++;
 	}
 	return (NULL);
 }
 
-// void	*wake_up(void *arg)
-// {
-// 	t_philo		*club;
-// 	long		time_passed;
-// 	long		target_time;
-// 	int			philo_id;
-// 	static int	id = 0;
-//
-// 	club = (t_philo *)arg;
-// 	pthread_mutex_lock(&club->lock);
-// 	philo_id = ++id;
-// 	pthread_mutex_unlock(&club->lock);
-// 	pthread_barrier_wait(&club->barrier);
-// 	if (philo_id == 1)
-// 	{
-// 		pthread_mutex_lock(&club->lock);
-// 		club->start = current_time_ms();
-// 		pthread_mutex_unlock(&club->lock);
-// 	}
-// 	pthread_barrier_wait(&club->barrier);
-// 	while (1)
-// 	{
-// 		pthread_mutex_lock(&club->lock);
-// 		target_time = club->start + club->time_to_eat;
-// 		time_passed = current_time_ms();
-// 		if (time_passed >= target_time)
-// 		{
-// 			printf("%d %ld\n", philo_id, time_passed - club->start);
-// 			pthread_mutex_unlock(&club->lock);
-// 			break ;
-// 		}
-// 		pthread_mutex_unlock(&club->lock);
-// 		usleep(100);
-// 	}
-// 	return (NULL);
-// }
-int	life(t_philo *data)
+void	*exist(void *arg)
+{
+	t_philo	*club;
+	long	elapsed;
+
+	club = (t_philo *)arg;
+	club->cool->philo_id = atomic_fetch_add(&club->id, 1);
+	if (club->cool->philo_id == 1)
+		club->start = current_time_ms();
+	printf("0 %d is thinking\n", club->cool->philo_id);
+	usleep(1000 * club->time_to_eat);
+	while (1)
+	{
+		
+		elapsed = current_time_ms() - club->start;
+		if (club->end)
+			return (NULL);
+		printf("%ld %d %s\n", elapsed, club->cool->philo_id, EAT);
+		usleep(1000 * (club->time_to_eat));
+		if (elapsed > club->time_to_die)
+			club->cool->state = -1;
+	}
+	return (NULL);
+}
+
+int	life(t_philo *club)
 {
 	int	i;
 
-	data->group = malloc(sizeof(pthread_t) * data->num);
-	pthread_mutex_init(&data->lock, NULL);
-	pthread_barrier_init(&data->barrier, NULL, data->num);
+	club->group = malloc(sizeof(pthread_t) * club->num);
+	club->cool = malloc(sizeof(t_dude) * club->num);
 	i = 0;
-	while (i < data->num && pthread_create(&data->group[i], NULL, exist,
-			data) == 0)
+	while (i < club->num && pthread_create(&club->group[i], NULL, exist,
+			club) == 0)
 		i++;
-	if (i != data->num)
-		return (0);
-	i = -1;
-	while (++i < data->num)
-		pthread_join(data->group[i], NULL);
-	free(data->group);
-	pthread_mutex_destroy(&data->lock);
-	pthread_barrier_destroy(&data->barrier);
+	pthread_create(&club->m, NULL, monitor, club);
+	while (--i > -1)
+		pthread_join(club->group[i], NULL);
+	free(club->group);
+	free(club->cool);
 	return (1);
 }
 
@@ -138,6 +110,8 @@ int	init_club(t_philo *debate_club, char **av, int ac)
 	debate_club->time_to_die = ft_parser(av[2]);
 	debate_club->time_to_eat = ft_parser(av[3]);
 	debate_club->time_to_sleep = ft_parser(av[4]);
+	debate_club->id = 1;
+	debate_club->end = 0;
 	if (debate_club->num < 1 || debate_club->time_to_sleep < 1
 		|| debate_club->time_to_eat < 1 || debate_club->time_to_sleep < 1)
 		return (-1);
