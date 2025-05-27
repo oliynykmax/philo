@@ -6,7 +6,7 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/23 14:30:12 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/25 22:06:48 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/27 16:33:06 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ number_of_philosophers\n\
 time_to_die\ntime_to_eat\ntime_to_sleep\n\
 [number_of_times_each_philosopher_must_eat]\n"
 
-typedef struct dude
+/* typedef struct dude
 {
 	long				meal_time;
 	int					philo_id;
@@ -54,6 +54,37 @@ typedef struct t_philo
 	atomic_int			id;
 	t_dude				*cool;
 	int					end;
+}						t_philo; */
+
+typedef struct s_philo	t_philo;
+
+typedef struct s_dude
+{
+	int			philo_id;
+	int					left_fork;
+	int					right_fork;
+	int					meals_eaten;
+	long				meal_time;
+	pthread_t			thread;
+	t_philo				*rules;
+}						t_dude;
+
+typedef struct s_philo
+{
+	int					num;
+	int					time_to_die;
+	int					time_to_eat;
+	int					time_to_sleep;
+	int					meals;
+	long				start_time;
+	int					died;
+	pthread_mutex_t		*forks;
+	pthread_mutex_t		writing;
+	pthread_t			m;
+	t_dude				*philos;
 }						t_philo;
+
+long					current_time_ms(void);
+long					ft_parser(const char *nptr);
 
 #endif

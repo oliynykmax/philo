@@ -6,7 +6,7 @@
 #    By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/05/17 16:00:00 by maoliiny          #+#    #+#              #
-#    Updated: 2025/05/23 14:44:37 by maoliiny         ###   ########.fr        #
+#    Updated: 2025/05/27 15:36:44 by maoliiny         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -17,7 +17,7 @@ CFLAGS  := -Wall -Wextra -Werror
 
 INCLUDES := -Iincl
 
-SRCS    := srcs/philo.c
+SRCS    := srcs/philo.c srcs/philo_utils.c
 OBJS    := $(SRCS:srcs/%.c=obj/%.o)
 
 .PHONY: all clean fclean re
