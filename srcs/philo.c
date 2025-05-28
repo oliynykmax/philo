@@ -6,12 +6,11 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/23 14:33:28 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/27 20:01:54 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/28 12:33:08 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../incl/philo.h"
-#include <pthread.h>
 
 void	*monitor(void *arg)
 {
@@ -38,75 +37,66 @@ void	*monitor(void *arg)
 		} */
 	return (NULL);
 }
+
+void	sleep_plus(long target_time)
+{
+	long	current;
+	long	time_to_sleep;
+
+	current = now_ms();
+	time_to_sleep = target_time - current;
+	if (time_to_sleep <= 0)
+		return ;
+	if (time_to_sleep > 1)
+		usleep((time_to_sleep - 1) * 1000);
+	while (now_ms() < target_time)
+		usleep(50);
+}
+
 void	*exist(void *arg)
 {
 	t_dude	*dude;
 
 	dude = (t_dude *)arg;
-	if (dude->philo_id == 1)
-		dude->rules->start_time = current_time_ms();
-	printf("my name: %d, my left fork: %d, my right fork: %d\n", dude->philo_id, dude->left_fork, dude->right_fork);
 	while (1)
 	{
-		printf("%ld %d %s\n", current_time_ms() - dude->rules->start_time, dude->philo_id, TNK);
-		pthread_mutex_lock(&dude->rules->forks[dude->left_fork]);
-		printf("%ld %d %s\n", current_time_ms() - dude->rules->start_time, dude->philo_id, FORK);
-		pthread_mutex_lock(&dude->rules->forks[dude->right_fork]);
-		printf("%ld %d %s\n", current_time_ms() - dude->rules->start_time, dude->philo_id, FORK);
-		printf("%ld %d %s\n", current_time_ms() - dude->rules->start_time, dude->philo_id, EAT);
-		usleep(1000 * dude->rules->time_to_eat);
-		pthread_mutex_unlock(&dude->rules->forks[dude->left_fork]);
-		pthread_mutex_unlock(&dude->rules->forks[dude->right_fork]);
-		printf("%ld %d %s\n", current_time_ms() - dude->rules->start_time, dude->philo_id, SLP);
-		usleep(900 * dude->rules->time_to_sleep);
+		printf("%ld %d %s\n", now_ms() - dude->rules->start_time,
+			dude->philo_id, TNK);
+		pthread_mutex_lock(&dude->rules->forks[dude->first_fork]);
+		printf("%ld %d %s\n", now_ms() - dude->rules->start_time,
+			dude->philo_id, FORK);
+		pthread_mutex_lock(&dude->rules->forks[dude->second_fork]);
+		printf("%ld %d %s\n", now_ms() - dude->rules->start_time,
+			dude->philo_id, FORK);
+		printf("%ld %d %s\n", now_ms() - dude->rules->start_time,
+			dude->philo_id, EAT);
+		sleep_plus(now_ms() + dude->rules->time_to_eat);
+		pthread_mutex_unlock(&dude->rules->forks[dude->first_fork]);
+		pthread_mutex_unlock(&dude->rules->forks[dude->second_fork]);
+		printf("%ld %d %s\n", now_ms() - dude->rules->start_time,
+			dude->philo_id, SLP);
+		sleep_plus(now_ms() + dude->rules->time_to_sleep);
 	}
 	return (NULL);
 }
-/* void	*exist(void *arg)
-{
-	t_dude	*club;
-	long	elapsed;
-	int		i;
 
-	club = (t_philo *)arg;
-	club->cool->philo_id = atomic_fetch_add(&club->id, 1);
-	if (club->cool->philo_id == 1)
-		club->start = current_time_ms();
-	printf("0 %d is thinking\n", club->cool->philo_id);
-	usleep(1000 * club->time_to_eat);
-	while (1)
-	{
-		elapsed = current_time_ms() - club->start;
-		if (club->end)
-			return (NULL);
-		printf("%ld %d %s\n", elapsed, club->cool->philo_id, EAT);
-		usleep(1000 * (club->time_to_eat));
-		if (elapsed > club->time_to_die)
-			club->cool->state = -1;
-	}
-	return (NULL);
-} */
 void	life_forks(t_philo *club, int start)
 {
-	int i = 0;
+	int	i;
+
+	i = 0;
 	if (start)
 	{
 		club->forks = malloc(sizeof(pthread_mutex_t) * club->num);
 		if (!club->forks)
 			return ;
 		while (i < club->num)
-		{
-			pthread_mutex_init(&club->forks[i], NULL);
-			i++;
-		}
+			pthread_mutex_init(&club->forks[i++], NULL);
 	}
 	else
 	{
 		while (i < club->num)
-		{
-			pthread_mutex_destroy(&club->forks[i]);
-			i++;
-		}
+			pthread_mutex_destroy(&club->forks[i++]);
 		free(club->forks);
 		club->forks = NULL;
 	}
@@ -117,17 +107,18 @@ int	create_philosophers(t_philo *club)
 	int	i;
 
 	i = 0;
+	club->start_time = now_ms();
 	while (i < club->num)
 	{
 		club->philos[i].philo_id = i + 1;
-		club->philos[i].left_fork = i + (int)(i % 2 == 0);
-		club->philos[i].right_fork = i + (int)(i % 2 != 0);
+		club->philos[i].first_fork = i + (int)(i % 2 == 0);
+		club->philos[i].second_fork = i + (int)(i % 2 != 0);
 		if (i + 1 == club->num)
 		{
-			if (club->philos[i].right_fork == i+1)
-				club->philos[i].right_fork = 0;
+			if (club->philos[i].second_fork == i + 1)
+				club->philos[i].second_fork = 0;
 			else
-				club->philos[i].left_fork = 0;
+				club->philos[i].first_fork = 0;
 		}
 		club->philos[i].rules = club;
 		if (pthread_create(&club->philos[i].thread, NULL, exist,
@@ -154,23 +145,6 @@ int	life(t_philo *club)
 	return (1);
 }
 
-/* int	life(t_philo *club)
-{
-	int	i;
-
-	club->group = malloc(sizeof(pthread_t) * club->num);
-	club->cool = malloc(sizeof(t_dude) * club->num);
-	i = 0;
-	while (i < club->num && pthread_create(&club->group[i], NULL, exist,
-			club) == 0)
-		i++;
-	pthread_create(&club->m, NULL, monitor, club);
-	while (--i > -1)
-		pthread_join(club->group[i], NULL);
-	free(club->group);
-	free(club->cool);
-	return (1);
-} */
 int	init_club(t_philo *debate_club, char **av, int ac)
 {
 	debate_club->num = ft_parser(av[1]);

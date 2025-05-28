@@ -6,7 +6,7 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/23 14:30:12 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/27 16:33:06 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/28 12:32:04 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,42 +31,18 @@ number_of_philosophers\n\
 time_to_die\ntime_to_eat\ntime_to_sleep\n\
 [number_of_times_each_philosopher_must_eat]\n"
 
-/* typedef struct dude
-{
-	long				meal_time;
-	int					philo_id;
-	int					state;
-}						t_dude;
-
-typedef struct t_philo
-{
-	int					num;
-	long				time_to_die;
-	long				time_to_eat;
-	long				time_to_sleep;
-	int					meals;
-	int					forks;
-	pthread_mutex_t		lock;
-	pthread_t			*group;
-	pthread_t			m;
-	long				start;
-	pthread_barrier_t	barrier;
-	atomic_int			id;
-	t_dude				*cool;
-	int					end;
-}						t_philo; */
-
 typedef struct s_philo	t_philo;
 
 typedef struct s_dude
 {
-	int			philo_id;
-	int					left_fork;
-	int					right_fork;
+	int					philo_id;
+	int					first_fork;
+	int					second_fork;
 	int					meals_eaten;
 	long				meal_time;
 	pthread_t			thread;
 	t_philo				*rules;
+	long				prev_sleep;
 }						t_dude;
 
 typedef struct s_philo
@@ -84,7 +60,7 @@ typedef struct s_philo
 	t_dude				*philos;
 }						t_philo;
 
-long					current_time_ms(void);
+long					now_ms(void);
 long					ft_parser(const char *nptr);
 
 #endif

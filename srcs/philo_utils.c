@@ -6,7 +6,7 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/27 15:33:45 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/27 15:35:48 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/28 12:31:53 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ long	ft_parser(const char *nptr)
 	return (num);
 }
 
-long	current_time_ms(void)
+long	now_ms(void)
 {
 	struct timeval	t;
 
