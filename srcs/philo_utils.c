@@ -6,7 +6,7 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/27 15:33:45 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/28 12:31:53 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/28 15:20:56 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,4 +35,19 @@ long	now_ms(void)
 
 	gettimeofday(&t, NULL);
 	return (t.tv_sec * 1000L + t.tv_usec / 1000);
+}
+
+void	sleep_plus(long target_time)
+{
+	long	current;
+	long	time_to_sleep;
+
+	current = now_ms();
+	time_to_sleep = target_time - current;
+	if (time_to_sleep <= 0)
+		return ;
+	if (time_to_sleep > 1)
+		usleep((time_to_sleep - 1) * 1000);
+	while (now_ms() < target_time)
+		usleep(50);
 }

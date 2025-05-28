@@ -6,7 +6,7 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/23 14:30:12 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/28 12:32:04 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/28 17:41:52 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 # include <string.h>
 # include <sys/time.h>
 # include <unistd.h>
+
 # define FORK "has taken a fork"
 # define EAT "is eating"
 # define DIED "died"
@@ -42,7 +43,7 @@ typedef struct s_dude
 	long				meal_time;
 	pthread_t			thread;
 	t_philo				*rules;
-	long				prev_sleep;
+	pthread_mutex_t		meal_lock;
 }						t_dude;
 
 typedef struct s_philo
@@ -53,7 +54,8 @@ typedef struct s_philo
 	int					time_to_sleep;
 	int					meals;
 	long				start_time;
-	int					died;
+	_Atomic int all_eaten;
+	_Atomic int died;
 	pthread_mutex_t		*forks;
 	pthread_mutex_t		writing;
 	pthread_t			m;
@@ -62,5 +64,6 @@ typedef struct s_philo
 
 long					now_ms(void);
 long					ft_parser(const char *nptr);
+void					sleep_plus(long target_time);
 
 #endif

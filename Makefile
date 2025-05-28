@@ -6,7 +6,7 @@
 #    By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/05/17 16:00:00 by maoliiny          #+#    #+#              #
-#    Updated: 2025/05/27 15:36:44 by maoliiny         ###   ########.fr        #
+#    Updated: 2025/05/28 16:20:58 by maoliiny         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -24,8 +24,11 @@ OBJS    := $(SRCS:srcs/%.c=obj/%.o)
 
 all: $(NAME)
 
-$(NAME): $(OBJS) incl/philo.h
-	$(CC) $(CFLAGS) $(INCLUDES) $(OBJS) -o $(NAME)
+$(NAME):
+	cc -Wall -Werror -Wextra ai2.c -o philo
+
+#$(NAME): $(OBJS) incl/philo.h
+#	$(CC) $(CFLAGS) $(INCLUDES) $(OBJS) -o $(NAME)
 
 obj/%.o: srcs/%.c incl/philo.h | obj
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
