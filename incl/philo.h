@@ -64,6 +64,8 @@ typedef struct s_philo
 
 long					now_ms(void);
 long					ft_parser(const char *nptr);
-void					sleep_plus(long target_time);
+void	sleep_plus(t_philo *rules, long target_time);
+int	ft_strncmp(const char *s1, const char *s2, size_t n);
+void	print_state(t_dude *d, const char *state);
 
 #endif

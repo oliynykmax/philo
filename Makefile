@@ -24,11 +24,11 @@ OBJS    := $(SRCS:srcs/%.c=obj/%.o)
 
 all: $(NAME)
 
-$(NAME):
-	cc -Wall -Werror -Wextra ai2.c -o philo
+#$(NAME):
+#	cc -Wall -Werror -Wextra ai2.c -o philo
 
-#$(NAME): $(OBJS) incl/philo.h
-#	$(CC) $(CFLAGS) $(INCLUDES) $(OBJS) -o $(NAME)
+$(NAME): $(OBJS) incl/philo.h
+	$(CC) $(CFLAGS) $(INCLUDES) $(OBJS) -o $(NAME)
 
 obj/%.o: srcs/%.c incl/philo.h | obj
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@

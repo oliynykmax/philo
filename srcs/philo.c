@@ -1,36 +1,40 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   philo.c                                            :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/05/23 14:33:28 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/28 18:21:19 by maoliiny         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "../incl/philo.h"
 
 void	*monitor(void *arg)
 {
 	t_philo	*club;
 	int		i;
+	int		philos_finished_eating_this_cycle;
+	long	current_philo_meal_time;
 
 	club = (t_philo *)arg;
-	while (1)
+	usleep(club->time_to_eat * 1000 / 4);
+	while (!atomic_load(&club->died) && !atomic_load(&club->all_eaten))
 	{
 		i = 0;
+		philos_finished_eating_this_cycle = 0;
 		while (i < club->num)
 		{
-			if (now_ms() - club->philos[i].meal_time > club->time_to_die + 1)
+			pthread_mutex_lock(&club->philos[i].meal_lock);
+			current_philo_meal_time = club->philos[i].meal_time;
+			pthread_mutex_unlock(&club->philos[i].meal_lock);
+			if (now_ms() - current_philo_meal_time > club->time_to_die + 7)
 			{
-				printf("%ld %d %s\n", now_ms() - club->start_time, i+1, DIED);
-				club->died = 1;
+				atomic_store(&club->died, 1);
+				print_state(&club->philos[i], DIED);
 				return (NULL);
 			}
+			if (club->meals > 0)
+				if (club->philos[i].meals_eaten >= club->meals)
+					philos_finished_eating_this_cycle++;
 			i++;
 		}
+		if (club->meals > 0 && philos_finished_eating_this_cycle == club->num)
+		{
+			atomic_store(&club->all_eaten, 1);
+			return (NULL);
+		}
+		usleep(1000);
 	}
 	return (NULL);
 }
@@ -40,136 +44,153 @@ void	*exist(void *arg)
 	t_dude	*d;
 
 	d = (t_dude *)arg;
-	while (1)
+//	if (d->philo_id % 2 == 0)
+//		usleep(d->rules->time_to_eat * 1000 / 2);
+	while (!atomic_load(&d->rules->died) && !atomic_load(&d->rules->all_eaten))
 	{
-		printf("%ld %d %s\n", now_ms() - d->rules->start_time,
-			d->philo_id, TNK);
-
-		pthread_mutex_lock(&d->rules->butler);
-
-		pthread_mutex_lock(&d->rules->forks[d->first_fork]);
-		printf("%ld %d %s\n", now_ms() - d->rules->start_time,
-			d->philo_id, FORK);
-		pthread_mutex_lock(&d->rules->forks[d->second_fork]);
-		printf("%ld %d %s\n", now_ms() - d->rules->start_time,
-			d->philo_id, FORK);
-		pthread_mutex_unlock(&d->rules->butler);
-		printf("%ld %d %s\n", now_ms() - d->rules->start_time,
-			d->philo_id, EAT);
-		d->meal_time = now_ms();
-		sleep_plus(now_ms() + d->rules->time_to_eat);
-		pthread_mutex_unlock(&d->rules->forks[d->first_fork]);
-		pthread_mutex_unlock(&d->rules->forks[d->second_fork]);
-		printf("%ld %d %s\n", now_ms() - d->rules->start_time,
-			d->philo_id, SLP);
-		sleep_plus(now_ms() + d->rules->time_to_sleep);
-		if (d->rules->died)
+		print_state(d, TNK);
+		if (d->rules->num == 1)
+		{
+			pthread_mutex_lock(&d->rules->forks[d->first_fork]);
+			print_state(d, FORK);
+			sleep_plus(d->rules, now_ms() + d->rules->time_to_die + 50);
+			pthread_mutex_unlock(&d->rules->forks[d->first_fork]);
 			return (NULL);
+		}
+		if (now_ms() - d->meal_time > d->rules->time_to_sleep && d->rules->num % 2 == 1)// && now_ms() - d->rules->start_time > 60)
+			usleep(500);
+		pthread_mutex_lock(&d->rules->forks[d->first_fork]);
+		print_state(d, FORK);
+		pthread_mutex_lock(&d->rules->forks[d->second_fork]);
+		print_state(d, FORK);
+		print_state(d, EAT);
+		pthread_mutex_lock(&d->meal_lock);
+		d->meal_time = now_ms();
+		pthread_mutex_unlock(&d->meal_lock);
+		sleep_plus(d->rules, now_ms() + d->rules->time_to_eat);
+		d->meals_eaten++;
+		pthread_mutex_unlock(&d->rules->forks[d->second_fork]);
+		pthread_mutex_unlock(&d->rules->forks[d->first_fork]);
+		if (atomic_load(&d->rules->died) || atomic_load(&d->rules->all_eaten))
+			break ;
+		if (d->rules->meals > 0 && d->meals_eaten >= d->rules->meals)
+			break ;
+		print_state(d, SLP);
+		sleep_plus(d->rules, now_ms() + d->rules->time_to_sleep);
 	}
 	return (NULL);
 }
 
-void life_forks(t_philo *club, int start)
+void	life_forks(t_philo *club, int start)
 {
-    int i = 0;
-    if (start)
-    {
-        club->forks = malloc(sizeof(pthread_mutex_t) * club->num);
-        while (i < club->num)
-            pthread_mutex_init(&club->forks[i++], NULL);
-        pthread_mutex_init(&club->butler, NULL);
-    }
-    else
-    {
-        i = 0;
-        while (i < club->num)
-            pthread_mutex_destroy(&club->forks[i++]);
-        free(club->forks);
-        pthread_mutex_destroy(&club->butler);
-    }
+	int	i;
+
+	i = 0;
+	if (start)
+	{
+		club->forks = malloc(sizeof(pthread_mutex_t) * club->num);
+		if (!club->forks)
+			return ;
+		while (i < club->num)
+			pthread_mutex_init(&club->forks[i++], NULL);
+		pthread_mutex_init(&club->writing, NULL);
+	}
+	else
+	{
+		i = 0;
+		while (i < club->num)
+		{
+			pthread_mutex_destroy(&club->forks[i]);
+			pthread_mutex_destroy(&club->philos[i].meal_lock);
+			i++;
+		}
+		free(club->forks);
+		pthread_mutex_destroy(&club->writing);
+	}
 }
 
-static void init_philosophers(t_philo *club)
+static void	init_philosophers(t_philo *club)
 {
-    t_dude *cur = club->philos;
-    t_dude *end = cur + club->num;
-    long   st  = club->start_time;
+	t_dude	*cur;
+	t_dude	*end;
+	size_t	idx;
 
-    while (cur < end)
-    {
-        size_t idx = cur - club->philos;
-        cur->philo_id    = idx + 1;
-        cur->meals_eaten = 0;
-        cur->first_fork  = idx + (idx % 2 == 0);
-        cur->second_fork = idx + (idx % 2 != 0);
-        if (idx + 1 == club->num)
-        {
-            if (cur->second_fork == (int)(idx + 1))
-                cur->second_fork = 0;
-            else
-                cur->first_fork = 0;
-        }
-        cur->meal_time = st;
-        cur->rules     = club;
-        pthread_mutex_init(&cur->meal_lock, NULL);
-        cur++;
-    }
+	cur = club->philos;
+	end = cur + club->num;
+	while (cur < end)
+	{
+		idx = cur - club->philos;
+		cur->philo_id = idx + 1;
+		cur->meals_eaten = 0;
+		cur->first_fork = idx + (idx % 2 == 0);
+		cur->second_fork = idx + (idx % 2 != 0);
+		if ((int)idx + 1 == club->num)
+		{
+			if (cur->second_fork == (int)(idx + 1))
+				cur->second_fork = 0;
+			else
+				cur->first_fork = 0;
+		}
+		cur->meal_time = club->start_time;
+		cur->rules = club;
+		pthread_mutex_init(&cur->meal_lock, NULL);
+		cur++;
+	}
 }
 
-static int launch_philosophers(t_philo *club)
+static int	launch_philosophers(t_philo *club)
 {
-    t_dude *cur = club->philos;
-    t_dude *end = cur + club->num;
-    int     started = 0;
+	t_dude	*cur;
+	t_dude	*end;
+	int		started;
 
-    while (cur < end)
-    {
-        if (pthread_create(&cur->thread, NULL, exist, cur) != 0)
-        {
-            atomic_store(&club->died, 1);
-            break;
-        }
-        started++;
-        cur++;
-    }
-    return started;
-}
-
-int create_philosophers(t_philo *club)
-{
-    club->start_time = now_ms();
-    init_philosophers(club);
-    return launch_philosophers(club);
+	cur = club->philos;
+	end = cur + club->num;
+	started = 0;
+	while (cur < end)
+	{
+		if (pthread_create(&cur->thread, NULL, exist, cur) != 0)
+		{
+			atomic_store(&club->died, 1);
+			break ;
+		}
+		started++;
+		cur++;
+	}
+	return (started);
 }
 
 int	life(t_philo *club)
 {
 	int	i;
-	int return = 1;
+
 	club->philos = malloc(sizeof(t_dude) * club->num);
+	if (!club->philos)
+		return (0);
 	life_forks(club, 1);
-	i = create_philosophers(club);
-	if (i - 1 == club->num)
-		if (pthread_create(&club->m, NULL, monitor, club) != 0)
-			atomic_store(&club->died, 1);
-	else
-		return = 0;
+	club->start_time = now_ms();
+	init_philosophers(club);
+	i = launch_philosophers(club);
+	if (pthread_create(&club->m, NULL, monitor, club) != 0)
+		atomic_store(&club->died, 1);
 	while (--i > -1)
 		pthread_join(club->philos[i].thread, NULL);
 	pthread_join(club->m, NULL);
 	free(club->philos);
 	life_forks(club, 0);
-	return (return);
+	return (1);
 }
 
 int	init_club(t_philo *debate_club, char **av, int ac)
 {
-	debate_club->died = 0;
+	atomic_init(&debate_club->died, 0);
+	atomic_init(&debate_club->all_eaten, 0);
+	debate_club->meals = 0;
 	debate_club->num = ft_parser(av[1]);
 	debate_club->time_to_die = ft_parser(av[2]);
 	debate_club->time_to_eat = ft_parser(av[3]);
 	debate_club->time_to_sleep = ft_parser(av[4]);
-	if (debate_club->num < 1 || debate_club->time_to_sleep < 1
+	if (debate_club->num < 1 || debate_club->time_to_die < 1
 		|| debate_club->time_to_eat < 1 || debate_club->time_to_sleep < 1)
 		return (-1);
 	if (ac == 6)
@@ -185,13 +206,17 @@ int	main(int ac, char **av)
 {
 	t_philo	debate_club;
 
+	memset(&debate_club, 0, sizeof(t_philo));
 	if (ac != 5 && ac != 6)
 	{
 		printf(INSTRUCTIONS);
 		return (0);
 	}
 	if (init_club(&debate_club, av, ac) != 0)
+	{
+		printf("Error: Invalid arguments.\n");
 		return (EXIT_FAILURE);
+	}
 	if (life(&debate_club) == 0)
 		return (EXIT_FAILURE);
 	return (0);
