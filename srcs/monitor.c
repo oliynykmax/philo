@@ -6,7 +6,7 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 13:57:05 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/29 14:03:56 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/29 14:51:37 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ static int	philo_timed_out(t_philo *club, int idx)
 	pthread_mutex_lock(&d->meal_lock);
 	last = d->meal_time;
 	pthread_mutex_unlock(&d->meal_lock);
-	return (now_ms() - last > club->time_to_die);
+	return (now_ms() - last > club->time_to_die + 1);
 }
 
 static int	scan_philosophers(t_philo *club, int *finished_count)

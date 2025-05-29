@@ -6,7 +6,7 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 13:16:36 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/29 14:25:18 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/29 14:56:06 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,9 +33,9 @@ static void	eat_phase(t_dude *d)
 	print_state(d, EAT);
 	pthread_mutex_lock(&d->meal_lock);
 	d->meal_time = now_ms();
+	d->meals_eaten += 1;
 	pthread_mutex_unlock(&d->meal_lock);
 	sleep_plus(d->r, now_ms() + d->r->time_to_eat);
-	d->meals_eaten++;
 }
 
 static void	sleep_phase(t_dude *d)
