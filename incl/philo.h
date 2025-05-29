@@ -6,7 +6,7 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/23 14:30:12 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/29 12:20:59 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/29 14:25:00 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,9 +42,9 @@ typedef struct s_dude
 	int					meals_eaten;
 	long				meal_time;
 	pthread_t			thread;
-	t_philo				*rules;
+	t_philo				*r;
 	pthread_mutex_t		meal_lock;
-	int			hunger;
+	int					hunger;
 }						t_dude;
 
 typedef struct s_philo
@@ -68,5 +68,8 @@ long					ft_parser(const char *nptr);
 void					sleep_plus(t_philo *rules, long target_time);
 int						ft_strncmp(const char *s1, const char *s2, size_t n);
 void					print_state(t_dude *d, const char *state);
+void					*exist(void *arg);
+int						life_forks(t_philo *club, int start);
+void					*monitor(void *arg);
 
 #endif

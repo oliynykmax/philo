@@ -6,22 +6,39 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/27 15:33:45 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/28 15:20:56 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/29 14:24:49 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../incl/philo.h"
 
-int	ft_strncmp(const char *s1, const char *s2, size_t n)
+int	life_forks(t_philo *club, int start)
 {
-	size_t	i;
+	int	i;
 
 	i = 0;
-	while (i < n && s1[i] && s2[i] && s1[i] == s2[i])
-		i++;
-	if (i == n)
-		return (0);
-	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
+	if (start)
+	{
+		club->forks = malloc(sizeof(pthread_mutex_t) * club->num);
+		if (!club->forks)
+			return (1);
+		while (i < club->num)
+			pthread_mutex_init(&club->forks[i++], NULL);
+		pthread_mutex_init(&club->writing, NULL);
+	}
+	else
+	{
+		i = 0;
+		while (i < club->num)
+		{
+			pthread_mutex_destroy(&club->forks[i]);
+			pthread_mutex_destroy(&club->philos[i].meal_lock);
+			i++;
+		}
+		free(club->forks);
+		pthread_mutex_destroy(&club->writing);
+	}
+	return (0);
 }
 
 long	now_ms(void)
@@ -49,7 +66,7 @@ long	ft_parser(const char *nptr)
 	return (num);
 }
 
-void	sleep_plus(t_philo *rules, long target_time)
+void	sleep_plus(t_philo *r, long target_time)
 {
 	long	current_ms;
 	long	time_to_wait_us;
@@ -58,7 +75,7 @@ void	sleep_plus(t_philo *rules, long target_time)
 	current_ms = now_ms();
 	while (current_ms < target_time)
 	{
-		if (atomic_load(&rules->died) || atomic_load(&rules->all_eaten))
+		if (atomic_load(&r->died) || atomic_load(&r->all_eaten))
 			break ;
 		time_to_wait_us = (target_time - current_ms) * 1000;
 		if (time_to_wait_us <= 0)
@@ -76,17 +93,16 @@ void	print_state(t_dude *d, const char *state)
 {
 	long	current_time;
 
-	pthread_mutex_lock(&d->rules->writing);
-	if (!atomic_load(&d->rules->died) && !atomic_load(&d->rules->all_eaten))
+	pthread_mutex_lock(&d->r->writing);
+	if (!atomic_load(&d->r->died) && !atomic_load(&d->r->all_eaten))
 	{
-		current_time = now_ms() - d->rules->start_time;
+		current_time = now_ms() - d->r->start_time;
 		printf("%ld %d %s\n", current_time, d->philo_id, state);
 	}
-	else if (ft_strncmp(state, DIED, 4) == 0
-		&& atomic_load(&d->rules->died))
+	else if (state[0] == 'd' && atomic_load(&d->r->died))
 	{
-		current_time = now_ms() - d->rules->start_time;
+		current_time = now_ms() - d->r->start_time;
 		printf("%ld %d %s\n", current_time, d->philo_id, state);
 	}
-	pthread_mutex_unlock(&d->rules->writing);
+	pthread_mutex_unlock(&d->r->writing);
 }
