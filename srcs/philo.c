@@ -8,7 +8,6 @@ void	*monitor(void *arg)
 	long	current_philo_meal_time;
 
 	club = (t_philo *)arg;
-	usleep(club->time_to_eat * 1000 / 4);
 	while (!atomic_load(&club->died) && !atomic_load(&club->all_eaten))
 	{
 		i = 0;
@@ -44,8 +43,6 @@ void	*exist(void *arg)
 	t_dude	*d;
 
 	d = (t_dude *)arg;
-//	if (d->philo_id % 2 == 0)
-//		usleep(d->rules->time_to_eat * 1000 / 2);
 	while (!atomic_load(&d->rules->died) && !atomic_load(&d->rules->all_eaten))
 	{
 		print_state(d, TNK);
@@ -57,7 +54,8 @@ void	*exist(void *arg)
 			pthread_mutex_unlock(&d->rules->forks[d->first_fork]);
 			return (NULL);
 		}
-		if (now_ms() - d->meal_time > d->rules->time_to_sleep && d->rules->num % 2 == 1)// && now_ms() - d->rules->start_time > 60)
+		if (now_ms() - d->meal_time > d->rules->time_to_sleep && d->rules->num
+			% 2 == 1)
 			usleep(500);
 		pthread_mutex_lock(&d->rules->forks[d->first_fork]);
 		print_state(d, FORK);
