@@ -6,7 +6,7 @@
 #    By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/05/17 16:00:00 by maoliiny          #+#    #+#              #
-#    Updated: 2025/05/29 13:58:07 by maoliiny         ###   ########.fr        #
+#    Updated: 2025/05/29 14:41:03 by maoliiny         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,9 +23,6 @@ OBJS    := $(SRCS:srcs/%.c=obj/%.o)
 .PHONY: all clean fclean re
 
 all: $(NAME)
-
-#$(NAME):
-#	cc -Wall -Werror -Wextra ai2.c -o philo
 
 $(NAME): $(OBJS) incl/philo.h
 	$(CC) $(CFLAGS) $(INCLUDES) $(OBJS) -o $(NAME)
