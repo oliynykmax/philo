@@ -6,7 +6,7 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/23 14:30:12 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/29 11:08:42 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/29 12:20:59 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,7 @@ typedef struct s_dude
 	pthread_t			thread;
 	t_philo				*rules;
 	pthread_mutex_t		meal_lock;
+	int			hunger;
 }						t_dude;
 
 typedef struct s_philo

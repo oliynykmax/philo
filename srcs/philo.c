@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   philo.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/05/29 11:55:34 by maoliiny          #+#    #+#             */
+/*   Updated: 2025/05/29 13:19:53 by maoliiny         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../incl/philo.h"
 
 void	*monitor(void *arg)
@@ -17,7 +29,7 @@ void	*monitor(void *arg)
 			pthread_mutex_lock(&club->philos[i].meal_lock);
 			current_philo_meal_time = club->philos[i].meal_time;
 			pthread_mutex_unlock(&club->philos[i].meal_lock);
-			if (now_ms() - current_philo_meal_time > club->time_to_die + 7)
+			if (now_ms() - current_philo_meal_time > club->time_to_die)
 			{
 				atomic_store(&club->died, 1);
 				print_state(&club->philos[i], DIED);
@@ -43,6 +55,8 @@ void	*exist(void *arg)
 	t_dude	*d;
 
 	d = (t_dude *)arg;
+	if (d->philo_id % 2)
+		usleep(500);
 	while (!atomic_load(&d->rules->died) && !atomic_load(&d->rules->all_eaten))
 	{
 		print_state(d, TNK);
@@ -71,8 +85,7 @@ void	*exist(void *arg)
 		pthread_mutex_unlock(&d->rules->forks[d->first_fork]);
 		if (atomic_load(&d->rules->died) || atomic_load(&d->rules->all_eaten))
 			break ;
-		if (d->rules->meals > 0 && d->meals_eaten >= d->rules->meals)
-			break ;
+
 		print_state(d, SLP);
 		sleep_plus(d->rules, now_ms() + d->rules->time_to_sleep);
 	}
@@ -109,30 +122,27 @@ void	life_forks(t_philo *club, int start)
 
 static void	init_philosophers(t_philo *club)
 {
-	t_dude	*cur;
-	t_dude	*end;
-	size_t	idx;
+	int	idx;
 
-	cur = club->philos;
-	end = cur + club->num;
-	while (cur < end)
+	idx = 0;
+	while (idx < club->num)
 	{
-		idx = cur - club->philos;
-		cur->philo_id = idx + 1;
-		cur->meals_eaten = 0;
-		cur->first_fork = idx + (idx % 2 == 0);
-		cur->second_fork = idx + (idx % 2 != 0);
-		if ((int)idx + 1 == club->num)
+		club->philos[idx].philo_id = idx + 1;
+		club->philos[idx].meals_eaten = 0;
+		club->philos[idx].meal_time = club->start_time;
+		club->philos[idx].rules = club;
+		if (idx % 2 == 0)
 		{
-			if (cur->second_fork == (int)(idx + 1))
-				cur->second_fork = 0;
-			else
-				cur->first_fork = 0;
+			club->philos[idx].first_fork = (idx + 1) % club->num;
+			club->philos[idx].second_fork = idx;
 		}
-		cur->meal_time = club->start_time;
-		cur->rules = club;
-		pthread_mutex_init(&cur->meal_lock, NULL);
-		cur++;
+		else
+		{
+			club->philos[idx].first_fork = idx;
+			club->philos[idx].second_fork = (idx + 1) % club->num;
+		}
+		pthread_mutex_init(&club->philos[idx].meal_lock, NULL);
+		idx++;
 	}
 }
 
