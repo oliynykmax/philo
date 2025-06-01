@@ -6,7 +6,7 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/23 14:30:12 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/29 14:50:24 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/30 16:19:17 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ typedef struct s_dude
 	int					philo_id;
 	int					first_fork;
 	int					second_fork;
-	int					meals_eaten;
+	atomic_int			meals_eaten;
 	long				meal_time;
 	pthread_t			thread;
 	t_philo				*r;

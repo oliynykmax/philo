@@ -6,7 +6,7 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/27 15:33:45 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/29 14:24:49 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/30 21:03:00 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,13 +75,13 @@ void	sleep_plus(t_philo *r, long target_time)
 	current_ms = now_ms();
 	while (current_ms < target_time)
 	{
-		if (atomic_load(&r->died) || atomic_load(&r->all_eaten))
+		if (r->died || r->all_eaten)
 			break ;
 		time_to_wait_us = (target_time - current_ms) * 1000;
 		if (time_to_wait_us <= 0)
 			break ;
-		if (time_to_wait_us > 200)
-			sleep_chunk = 200;
+		if (time_to_wait_us > 250)
+			sleep_chunk = 250;
 		else
 			sleep_chunk = time_to_wait_us;
 		usleep(sleep_chunk);
@@ -94,12 +94,12 @@ void	print_state(t_dude *d, const char *state)
 	long	current_time;
 
 	pthread_mutex_lock(&d->r->writing);
-	if (!atomic_load(&d->r->died) && !atomic_load(&d->r->all_eaten))
+	if (!d->r->died && !d->r->all_eaten)
 	{
 		current_time = now_ms() - d->r->start_time;
 		printf("%ld %d %s\n", current_time, d->philo_id, state);
 	}
-	else if (state[0] == 'd' && atomic_load(&d->r->died))
+	else if (state[0] == 'd' && d->r->died)
 	{
 		current_time = now_ms() - d->r->start_time;
 		printf("%ld %d %s\n", current_time, d->philo_id, state);

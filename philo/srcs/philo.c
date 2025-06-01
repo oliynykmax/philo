@@ -6,7 +6,7 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 11:55:34 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/29 14:24:31 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/30 18:34:31 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ static int	launch_philosophers(t_philo *club)
 	{
 		if (pthread_create(&cur->thread, NULL, exist, cur) != 0)
 		{
-			atomic_store(&club->died, 1);
+			club->died = 1;
 			break ;
 		}
 		started++;
@@ -63,6 +63,7 @@ static int	launch_philosophers(t_philo *club)
 int	life(t_philo *club)
 {
 	int	i;
+	int	m_suc;
 
 	club->philos = malloc(sizeof(t_dude) * club->num);
 	if (!club->philos)
@@ -75,11 +76,13 @@ int	life(t_philo *club)
 	club->start_time = now_ms();
 	init_philosophers(club);
 	i = launch_philosophers(club);
-	if (pthread_create(&club->m, NULL, monitor, club) != 0)
-		atomic_store(&club->died, 1);
+	m_suc = pthread_create(&club->m, NULL, monitor, club);
+	if (m_suc != 0)
+		club->died = 1;
 	while (--i > -1)
 		pthread_join(club->philos[i].thread, NULL);
-	pthread_join(club->m, NULL);
+	if (m_suc == 0)
+		pthread_join(club->m, NULL);
 	life_forks(club, 0);
 	free(club->philos);
 	return (1);
@@ -87,8 +90,8 @@ int	life(t_philo *club)
 
 int	init_club(t_philo *debate_club, char **av, int ac)
 {
-	atomic_init(&debate_club->died, 0);
-	atomic_init(&debate_club->all_eaten, 0);
+	debate_club->died = 0;
+	debate_club->all_eaten = 0;
 	debate_club->meals = 0;
 	debate_club->num = ft_parser(av[1]);
 	debate_club->time_to_die = ft_parser(av[2]);

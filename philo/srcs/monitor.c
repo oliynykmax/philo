@@ -6,7 +6,7 @@
 /*   By: maoliiny <maoliiny@student.hive.fi>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/05/29 13:57:05 by maoliiny          #+#    #+#             */
-/*   Updated: 2025/05/29 14:51:37 by maoliiny         ###   ########.fr       */
+/*   Updated: 2025/05/31 16:18:06 by maoliiny         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ static int	philo_timed_out(t_philo *club, int idx)
 	pthread_mutex_lock(&d->meal_lock);
 	last = d->meal_time;
 	pthread_mutex_unlock(&d->meal_lock);
-	return (now_ms() - last > club->time_to_die + 1);
+	return (now_ms() - last > club->time_to_die);
 }
 
 static int	scan_philosophers(t_philo *club, int *finished_count)
@@ -33,7 +33,7 @@ static int	scan_philosophers(t_philo *club, int *finished_count)
 	{
 		if (philo_timed_out(club, i))
 		{
-			atomic_store(&club->died, 1);
+			club->died = 1;
 			print_state(&club->philos[i], DIED);
 			return (1);
 		}
@@ -50,14 +50,14 @@ void	*monitor(void *arg)
 	int		finished;
 
 	club = (t_philo *)arg;
-	while (!atomic_load(&club->died) && !atomic_load(&club->all_eaten))
+	while (!club->died && !club->all_eaten)
 	{
 		finished = 0;
 		if (scan_philosophers(club, &finished))
 			return (NULL);
 		if (club->meals > 0 && finished == club->num)
 		{
-			atomic_store(&club->all_eaten, 1);
+			club->all_eaten = 1;
 			return (NULL);
 		}
 		usleep(1000);
